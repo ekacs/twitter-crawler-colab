@@ -1,15 +1,29 @@
 import os
+import re
 import shutil
 import subprocess
 from datetime import date
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(
-    page_title="Twitter (X) Data Crawler",
-    page_icon="🐦",
-    layout="wide"
-)
+st.set_page_config(page_title="Twitter (X) Data Crawler", page_icon="🐦", layout="wide")
+
+
+def clean_crawler_log(log_text: str) -> str:
+    if not log_text:
+        return ""
+    lines = log_text.splitlines()
+    filtered = [
+        line
+        for line in lines
+        if not re.search(
+            r"research\s+by|educational\s+purposes\s+only|tweet\s*harvest\s*\[",
+            line,
+            re.IGNORECASE,
+        )
+    ]
+    return "\n".join(filtered).strip()
+
 
 @st.cache_resource(show_spinner="Menyiapkan browser Chromium untuk pertama kali...")
 def ensure_playwright_chromium():
@@ -19,17 +33,18 @@ def ensure_playwright_chromium():
                 ["npx", "-y", "playwright", "install", "chromium"],
                 capture_output=True,
                 text=True,
-                shell=(os.name == "nt")
+                shell=(os.name == "nt"),
             )
         except Exception:
             pass
+
 
 ensure_playwright_chromium()
 
 st.title("🐦 Twitter (X) Data Crawler Sederhana")
 st.markdown(
     "Aplikasi sederhana untuk mengambil data tweet berdasarkan **kata kunci** dan **periode waktu**, "
-    "menampilkannya dalam **DataFrame**, dan mengunduhnya sebagai file **CSV**. by EKaCS"
+    "menampilkannya dalam **DataFrame**, dan mengunduhnya sebagai file **CSV**. by EKaCS (ekacsisfreeman@gmail.com)"
 )
 
 # Sidebar untuk panduan singkat
@@ -53,13 +68,13 @@ with st.form("crawler_form"):
     twitter_auth_token = st.text_input(
         "Twitter Auth Token (Wajib)",
         type="password",
-        placeholder="Masukkan auth_token dari cookie x.com..."
+        placeholder="Masukkan auth_token dari cookie x.com...",
     )
 
     kata_kunci = st.text_input(
         "Kata Kunci Pencarian",
         value="timnas indonesia",
-        placeholder="Contoh: timnas indonesia"
+        placeholder="Contoh: timnas indonesia",
     )
 
     col1, col2, col3, col4 = st.columns(4)
@@ -69,22 +84,15 @@ with st.form("crawler_form"):
         tanggal_akhir = st.date_input("Tanggal Akhir", value=date.today())
     with col3:
         bahasa = st.selectbox(
-            "Bahasa Tweet",
-            options=["id", "en", "Semua Bahasa"],
-            index=0
+            "Bahasa Tweet", options=["id", "en", "Semua Bahasa"], index=0
         )
     with col4:
         jumlah_tweet = st.number_input(
-            "Jumlah Maksimal Tweet",
-            min_value=10,
-            max_value=5000,
-            value=100,
-            step=10
+            "Jumlah Maksimal Tweet", min_value=10, max_value=5000, value=100, step=10
         )
 
     nama_file_csv = st.text_input(
-        "Nama File Output CSV",
-        value="hasil_crawling_twitter.csv"
+        "Nama File Output CSV", value="hasil_crawling_twitter.csv"
     )
 
     submit_btn = st.form_submit_button("🚀 Mulai Crawling", use_container_width=True)
@@ -104,7 +112,9 @@ if submit_btn:
             clean_filename += ".csv"
 
         # Susun query pencarian
-        search_query = f"{kata_kunci.strip()} since:{tanggal_mulai} until:{tanggal_akhir}"
+        search_query = (
+            f"{kata_kunci.strip()} since:{tanggal_mulai} until:{tanggal_akhir}"
+        )
         if bahasa != "Semua Bahasa":
             search_query += f" lang:{bahasa}"
 
@@ -119,25 +129,32 @@ if submit_btn:
                 pass
 
         cmd = [
-            "npx", "-y", "tweet-harvest@2.7.1",
-            "-o", clean_filename,
-            "-s", search_query,
-            "--tab", "LATEST",
-            "-l", str(jumlah_tweet),
-            "--token", twitter_auth_token.strip()
+            "npx",
+            "-y",
+            "tweet-harvest@2.7.1",
+            "-o",
+            clean_filename,
+            "-s",
+            search_query,
+            "--tab",
+            "LATEST",
+            "-l",
+            str(jumlah_tweet),
+            "--token",
+            twitter_auth_token.strip(),
         ]
 
-        with st.spinner(f"⏳ Sedang melakukan crawling hingga {jumlah_tweet} tweet... Mohon tunggu."):
+        with st.spinner(
+            f"⏳ Sedang melakukan crawling hingga {jumlah_tweet} tweet... Mohon tunggu."
+        ):
             try:
                 process = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    shell=(os.name == "nt")
+                    cmd, capture_output=True, text=True, shell=(os.name == "nt")
                 )
 
                 with st.expander("📋 Lihat Log Proses Crawling"):
-                    st.code((process.stdout or "") + "\n" + (process.stderr or ""))
+                    raw_log = (process.stdout or "") + "\n" + (process.stderr or "")
+                    st.code(clean_crawler_log(raw_log))
 
                 if os.path.exists(output_path):
                     df = pd.read_csv(output_path)
@@ -170,5 +187,5 @@ if "crawled_df" in st.session_state and st.session_state["crawled_df"] is not No
         data=csv_bytes,
         file_name=filename_result,
         mime="text/csv",
-        use_container_width=True
+        use_container_width=True,
     )
