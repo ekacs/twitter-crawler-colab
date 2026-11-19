@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from datetime import date
 import pandas as pd
@@ -10,10 +11,25 @@ st.set_page_config(
     layout="wide"
 )
 
+@st.cache_resource(show_spinner="Menyiapkan browser Chromium untuk pertama kali...")
+def ensure_playwright_chromium():
+    if shutil.which("npx"):
+        try:
+            subprocess.run(
+                ["npx", "-y", "playwright", "install", "chromium"],
+                capture_output=True,
+                text=True,
+                shell=(os.name == "nt")
+            )
+        except Exception:
+            pass
+
+ensure_playwright_chromium()
+
 st.title("🐦 Twitter (X) Data Crawler Sederhana")
 st.markdown(
     "Aplikasi sederhana untuk mengambil data tweet berdasarkan **kata kunci** dan **periode waktu**, "
-    "menampilkannya dalam **DataFrame**, dan mengunduhnya sebagai file **CSV**."
+    "menampilkannya dalam **DataFrame**, dan mengunduhnya sebagai file **CSV**. by EKaCS"
 )
 
 # Sidebar untuk panduan singkat
