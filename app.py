@@ -64,9 +64,9 @@ with st.form("crawler_form"):
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        tanggal_mulai = st.date_input("Tanggal Mulai", value=date(2024, 1, 1))
+        tanggal_mulai = st.date_input("Tanggal Mulai", value=date(2026, 1, 1))
     with col2:
-        tanggal_akhir = st.date_input("Tanggal Akhir", value=date(2024, 12, 31))
+        tanggal_akhir = st.date_input("Tanggal Akhir", value=date.today())
     with col3:
         bahasa = st.selectbox(
             "Bahasa Tweet",
@@ -119,7 +119,7 @@ if submit_btn:
                 pass
 
         cmd = [
-            "npx", "-y", "tweet-harvest@2.6.1",
+            "npx", "-y", "tweet-harvest@2.7.1",
             "-o", clean_filename,
             "-s", search_query,
             "--tab", "LATEST",
