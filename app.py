@@ -9,6 +9,18 @@ import streamlit as st
 st.set_page_config(page_title="Twitter (X) Data Crawler", page_icon="🐦", layout="wide")
 
 
+# Pastikan runtime portabel (jika ada) diprioritaskan di PATH
+app_dir = os.path.dirname(os.path.abspath(__file__))
+portable_node = os.path.join(app_dir, "runtime", "node")
+portable_browsers = os.path.join(app_dir, "runtime", "playwright-browsers")
+
+if os.path.exists(portable_node):
+    os.environ["PATH"] = portable_node + os.pathsep + os.environ.get("PATH", "")
+
+if os.path.exists(portable_browsers):
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = portable_browsers
+
+
 def clean_crawler_log(log_text: str) -> str:
     if not log_text:
         return ""

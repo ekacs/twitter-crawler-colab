@@ -1,0 +1,21 @@
+# Git Ignore
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data hasil crawling
+tweets-data/
+*.csv
+
+# Folder error log
+.log-error/
+
+# Folder runtime portabel (karena ukurannya ratusan MB, tidak perlu di-push ke git)
+runtime/
+runtime_mac/
+temp_downloads/
+
+# Virtual Environment lokal jika ada
+venv/
+.venv/
+env/
